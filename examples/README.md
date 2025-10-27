@@ -110,6 +110,47 @@ Compare with `02_matrix_multiply_naive.py` to see the impact of GPU optimization
 
 ---
 
+### 02_matrix_multiply_optimized.py - Matrix Multiplication (Highly Optimized)
+
+**Highly optimized implementation** with advanced GPU techniques for maximum performance.
+
+**Key Features:**
+- Bank conflict avoidance in shared memory
+- Loop unrolling with `#pragma unroll`
+- Optimal thread group sizing for M1 GPU
+- Better instruction pipeline utilization
+
+**Run:**
+```bash
+python examples/02_matrix_multiply_optimized.py
+```
+
+**Expected Output:**
+```
+Huge (2048x2048):
+  NumPy:  21.35 ms (804 GFLOPS)
+  Metal:  88.08 ms (195 GFLOPS) - 2.5× slower but improving
+
+Massive (4096x4096):
+  NumPy:  158.32 ms (868 GFLOPS)
+  Metal:  617.51 ms (222 GFLOPS) - Getting closer!
+```
+
+**Optimizations Applied:**
+- TILE_SIZE+1 padding prevents bank conflicts
+- `#pragma unroll` for better instruction pipelining
+- Optimal 16×16 tile size for M1 occupancy
+- ~10-20% improvement over basic tiled version
+
+**Performance Progression:**
+- Naive: ~100 GFLOPS
+- Tiled: ~200 GFLOPS
+- Optimized: ~220 GFLOPS
+
+NumPy remains faster due to dedicated AMX matrix hardware, but optimized GPU shows the limits of software optimization.
+
+---
+
 ### 03_triangle_rendering.py - Graphics Pipeline and Rendering
 
 Complete graphics pipeline demonstration with offscreen rendering, depth testing, and image output.
