@@ -55,6 +55,47 @@ from ._pymetal import (
     MetalLayer,
     MetalDrawable,
 
+    # Phase 2 Advanced: Blit encoder
+    BlitCommandEncoder,
+
+    # Phase 2 Advanced: Depth/stencil testing
+    DepthStencilState,
+    DepthStencilDescriptor,
+    StencilDescriptor,
+
+    # Phase 2 Advanced: Memory management
+    Heap,
+    HeapDescriptor,
+
+    # Phase 2 Advanced: Synchronization
+    Fence,
+
+    # Utility structures
+    Origin,
+    Size,
+    Range,
+
+    # Phase 3: Event system
+    Event,
+    SharedEvent,
+
+    # Phase 3: Argument buffers
+    ArgumentEncoder,
+    ArgumentDescriptor,
+
+    # Phase 3: Indirect commands
+    IndirectCommandBuffer,
+    IndirectCommandBufferDescriptor,
+
+    # Phase 3: Binary archive
+    BinaryArchive,
+    BinaryArchiveDescriptor,
+
+    # Phase 3: Capture/debugging
+    CaptureScope,
+    CaptureManager,
+    shared_capture_manager,
+
     # Phase 1 Enumerations
     StorageMode,
     CPUCacheMode,
@@ -76,6 +117,11 @@ from ._pymetal import (
     CompareFunction,
     BlendFactor,
     BlendOperation,
+    StencilOperation,
+
+    # Phase 3 Enumerations
+    DataType,
+    BindingAccess,
 
     # ResourceOptions constants (bitmask values)
     ResourceCPUCacheModeDefaultCache,
@@ -93,6 +139,12 @@ from ._pymetal import (
     ColorWriteMaskBlue,
     ColorWriteMaskAlpha,
     ColorWriteMaskAll,
+
+    # IndirectCommandType constants (bitmask values)
+    IndirectCommandTypeDraw,
+    IndirectCommandTypeDrawIndexed,
+    IndirectCommandTypeDrawPatches,
+    IndirectCommandTypeDrawIndexedPatches,
 )
 
 __version__ = "0.1.0"
@@ -147,6 +199,47 @@ __all__ = [
     "MetalLayer",
     "MetalDrawable",
 
+    # Phase 2 Advanced: Blit encoder
+    "BlitCommandEncoder",
+
+    # Phase 2 Advanced: Depth/stencil testing
+    "DepthStencilState",
+    "DepthStencilDescriptor",
+    "StencilDescriptor",
+
+    # Phase 2 Advanced: Memory management
+    "Heap",
+    "HeapDescriptor",
+
+    # Phase 2 Advanced: Synchronization
+    "Fence",
+
+    # Utility structures
+    "Origin",
+    "Size",
+    "Range",
+
+    # Phase 3: Event system
+    "Event",
+    "SharedEvent",
+
+    # Phase 3: Argument buffers
+    "ArgumentEncoder",
+    "ArgumentDescriptor",
+
+    # Phase 3: Indirect commands
+    "IndirectCommandBuffer",
+    "IndirectCommandBufferDescriptor",
+
+    # Phase 3: Binary archive
+    "BinaryArchive",
+    "BinaryArchiveDescriptor",
+
+    # Phase 3: Capture/debugging
+    "CaptureScope",
+    "CaptureManager",
+    "shared_capture_manager",
+
     # Phase 1 Enumerations
     "StorageMode",
     "CPUCacheMode",
@@ -168,6 +261,11 @@ __all__ = [
     "CompareFunction",
     "BlendFactor",
     "BlendOperation",
+    "StencilOperation",
+
+    # Phase 3 Enumerations
+    "DataType",
+    "BindingAccess",
 
     # ResourceOptions constants
     "ResourceCPUCacheModeDefaultCache",
@@ -185,4 +283,10 @@ __all__ = [
     "ColorWriteMaskBlue",
     "ColorWriteMaskAlpha",
     "ColorWriteMaskAll",
+
+    # IndirectCommandType constants
+    "IndirectCommandTypeDraw",
+    "IndirectCommandTypeDrawIndexed",
+    "IndirectCommandTypeDrawPatches",
+    "IndirectCommandTypeDrawIndexedPatches",
 ]

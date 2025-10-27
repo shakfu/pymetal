@@ -181,7 +181,79 @@ void wrap_device(nb::module_& m) {
             },
             "descriptor"_a,
             nb::rv_policy::reference,
-            "Create a render pipeline state from a descriptor");
+            "Create a render pipeline state from a descriptor")
+
+        // Phase 2 Advanced: Depth/stencil, heap, and fence methods
+        .def("new_depth_stencil_state",
+            [](MTL::Device* self, MTL::DepthStencilDescriptor* descriptor) {
+                return self->newDepthStencilState(descriptor);
+            },
+            "descriptor"_a,
+            nb::rv_policy::reference,
+            "Create a depth/stencil state")
+
+        .def("new_heap",
+            [](MTL::Device* self, MTL::HeapDescriptor* descriptor) {
+                return self->newHeap(descriptor);
+            },
+            "descriptor"_a,
+            nb::rv_policy::reference,
+            "Create a heap for resource suballocation")
+
+        .def("new_fence",
+            [](MTL::Device* self) {
+                return self->newFence();
+            },
+            nb::rv_policy::reference,
+            "Create a new fence for synchronization")
+
+        // Phase 3: Event system
+        .def("new_event",
+            [](MTL::Device* self) {
+                return self->newEvent();
+            },
+            nb::rv_policy::reference,
+            "Create a new event")
+
+        .def("new_shared_event",
+            [](MTL::Device* self) {
+                return self->newSharedEvent();
+            },
+            nb::rv_policy::reference,
+            "Create a new shared event")
+
+        // Phase 3: Argument encoder
+        .def("new_argument_encoder",
+            [](MTL::Device* self, NS::Array* arguments) {
+                return self->newArgumentEncoder(arguments);
+            },
+            "arguments"_a,
+            nb::rv_policy::reference,
+            "Create an argument encoder from an array of argument descriptors")
+
+        // Phase 3: Indirect command buffer
+        .def("new_indirect_command_buffer",
+            [](MTL::Device* self, MTL::IndirectCommandBufferDescriptor* descriptor, uint32_t max_count, uint64_t options) {
+                return self->newIndirectCommandBuffer(descriptor, max_count, (MTL::ResourceOptions)options);
+            },
+            "descriptor"_a, "max_count"_a, "options"_a,
+            nb::rv_policy::reference,
+            "Create an indirect command buffer")
+
+        // Phase 3: Binary archive
+        .def("new_binary_archive",
+            [](MTL::Device* self, MTL::BinaryArchiveDescriptor* descriptor) {
+                NS::Error* error = nullptr;
+                MTL::BinaryArchive* archive = self->newBinaryArchive(descriptor, &error);
+                if (error) {
+                    std::string error_msg = ns_string_to_std(error->localizedDescription());
+                    throw std::runtime_error("Failed to create binary archive: " + error_msg);
+                }
+                return archive;
+            },
+            "descriptor"_a,
+            nb::rv_policy::reference,
+            "Create a binary archive for pipeline caching");
 
     // Global function to create default device
     m.def("create_system_default_device",
@@ -243,6 +315,14 @@ void wrap_command_buffer(nb::module_& m) {
             "descriptor"_a,
             nb::rv_policy::reference,
             "Create a render command encoder")
+
+        // Phase 2 Advanced: Blit command encoder
+        .def("blit_command_encoder",
+            [](MTL::CommandBuffer* self) {
+                return self->blitCommandEncoder();
+            },
+            nb::rv_policy::reference,
+            "Create a blit command encoder for memory operations")
 
         .def("commit",
             [](MTL::CommandBuffer* self) {
@@ -609,6 +689,70 @@ void wrap_graphics_enums(nb::module_& m) {
     m.attr("ColorWriteMaskBlue") = static_cast<uint64_t>(MTL::ColorWriteMaskBlue);
     m.attr("ColorWriteMaskAlpha") = static_cast<uint64_t>(MTL::ColorWriteMaskAlpha);
     m.attr("ColorWriteMaskAll") = static_cast<uint64_t>(MTL::ColorWriteMaskAll);
+
+    // StencilOperation
+    nb::enum_<MTL::StencilOperation>(m, "StencilOperation")
+        .value("Keep", MTL::StencilOperationKeep)
+        .value("Zero", MTL::StencilOperationZero)
+        .value("Replace", MTL::StencilOperationReplace)
+        .value("IncrementClamp", MTL::StencilOperationIncrementClamp)
+        .value("DecrementClamp", MTL::StencilOperationDecrementClamp)
+        .value("Invert", MTL::StencilOperationInvert)
+        .value("IncrementWrap", MTL::StencilOperationIncrementWrap)
+        .value("DecrementWrap", MTL::StencilOperationDecrementWrap)
+        .export_values();
+
+    // Utility structures for blit operations
+    nb::class_<MTL::Origin>(m, "Origin", "3D origin for texture regions")
+        .def(nb::init<uint32_t, uint32_t, uint32_t>(), "x"_a = 0, "y"_a = 0, "z"_a = 0)
+        .def_rw("x", &MTL::Origin::x)
+        .def_rw("y", &MTL::Origin::y)
+        .def_rw("z", &MTL::Origin::z);
+
+    nb::class_<MTL::Size>(m, "Size", "3D size for texture regions")
+        .def(nb::init<uint32_t, uint32_t, uint32_t>(), "width"_a, "height"_a = 1, "depth"_a = 1)
+        .def_rw("width", &MTL::Size::width)
+        .def_rw("height", &MTL::Size::height)
+        .def_rw("depth", &MTL::Size::depth);
+
+    nb::class_<NS::Range>(m, "Range", "Range for buffer operations")
+        .def(nb::init<uint64_t, uint64_t>(), "location"_a, "length"_a)
+        .def_rw("location", &NS::Range::location)
+        .def_rw("length", &NS::Range::length);
+
+    // Phase 3: DataType enum
+    nb::enum_<MTL::DataType>(m, "DataType")
+        .value("None", MTL::DataTypeNone)
+        .value("Struct", MTL::DataTypeStruct)
+        .value("Array", MTL::DataTypeArray)
+        .value("Float", MTL::DataTypeFloat)
+        .value("Float2", MTL::DataTypeFloat2)
+        .value("Float3", MTL::DataTypeFloat3)
+        .value("Float4", MTL::DataTypeFloat4)
+        .value("Int", MTL::DataTypeInt)
+        .value("Int2", MTL::DataTypeInt2)
+        .value("Int3", MTL::DataTypeInt3)
+        .value("Int4", MTL::DataTypeInt4)
+        .value("UInt", MTL::DataTypeUInt)
+        .value("UInt2", MTL::DataTypeUInt2)
+        .value("UInt3", MTL::DataTypeUInt3)
+        .value("UInt4", MTL::DataTypeUInt4)
+        .value("Texture", MTL::DataTypeTexture)
+        .value("Sampler", MTL::DataTypeSampler)
+        .export_values();
+
+    // Phase 3: BindingAccess enum
+    nb::enum_<MTL::BindingAccess>(m, "BindingAccess")
+        .value("ReadOnly", MTL::BindingAccessReadOnly)
+        .value("ReadWrite", MTL::BindingAccessReadWrite)
+        .value("WriteOnly", MTL::BindingAccessWriteOnly)
+        .export_values();
+
+    // Phase 3: IndirectCommandType enum (bitmask)
+    m.attr("IndirectCommandTypeDraw") = static_cast<uint64_t>(MTL::IndirectCommandTypeDraw);
+    m.attr("IndirectCommandTypeDrawIndexed") = static_cast<uint64_t>(MTL::IndirectCommandTypeDrawIndexed);
+    m.attr("IndirectCommandTypeDrawPatches") = static_cast<uint64_t>(MTL::IndirectCommandTypeDrawPatches);
+    m.attr("IndirectCommandTypeDrawIndexedPatches") = static_cast<uint64_t>(MTL::IndirectCommandTypeDrawIndexedPatches);
 }
 
 // ============================================================================
@@ -1168,11 +1312,619 @@ void wrap_render_encoder(nb::module_& m) {
             "type"_a, "index_count"_a, "index_type"_a, "index_buffer"_a, "index_buffer_offset"_a,
             "Draw indexed primitives")
 
+        // Phase 2 Advanced: Depth/stencil and synchronization
+        .def("set_depth_stencil_state",
+            [](MTL::RenderCommandEncoder* self, MTL::DepthStencilState* state) {
+                self->setDepthStencilState(state);
+            },
+            "state"_a,
+            "Set the depth and stencil test state")
+
+        .def("set_stencil_reference_value",
+            [](MTL::RenderCommandEncoder* self, uint32_t value) {
+                self->setStencilReferenceValue(value);
+            },
+            "value"_a,
+            "Set the stencil reference value")
+
+        .def("update_fence",
+            [](MTL::RenderCommandEncoder* self, MTL::Fence* fence) {
+                self->updateFence(fence, MTL::RenderStageFragment);
+            },
+            "fence"_a,
+            "Update a fence after rendering")
+
+        .def("wait_for_fence",
+            [](MTL::RenderCommandEncoder* self, MTL::Fence* fence) {
+                self->waitForFence(fence, MTL::RenderStageVertex);
+            },
+            "fence"_a,
+            "Wait for a fence before rendering")
+
         .def("end_encoding",
             [](MTL::RenderCommandEncoder* self) {
                 self->endEncoding();
             },
             "Finish encoding commands");
+}
+
+// ============================================================================
+// Phase 2 Advanced: BlitCommandEncoder
+// ============================================================================
+
+void wrap_blit_encoder(nb::module_& m) {
+    nb::class_<MTL::BlitCommandEncoder>(m, "BlitCommandEncoder",
+        "Encoder for memory transfer and synchronization operations")
+
+        .def("copy_from_buffer",
+            [](MTL::BlitCommandEncoder* self, MTL::Buffer* src, uint64_t src_offset,
+               MTL::Buffer* dst, uint64_t dst_offset, uint64_t size) {
+                self->copyFromBuffer(src, src_offset, dst, dst_offset, size);
+            },
+            "source_buffer"_a, "source_offset"_a, "destination_buffer"_a,
+            "destination_offset"_a, "size"_a,
+            "Copy data from one buffer to another")
+
+        .def("copy_from_texture_to_buffer",
+            [](MTL::BlitCommandEncoder* self, MTL::Texture* src, uint32_t src_slice,
+               uint32_t src_level, MTL::Origin src_origin, MTL::Size src_size,
+               MTL::Buffer* dst, uint64_t dst_offset, uint32_t dst_bytes_per_row,
+               uint32_t dst_bytes_per_image) {
+                self->copyFromTexture(src, src_slice, src_level, src_origin, src_size,
+                                     dst, dst_offset, dst_bytes_per_row, dst_bytes_per_image);
+            },
+            "source_texture"_a, "source_slice"_a, "source_level"_a, "source_origin"_a,
+            "source_size"_a, "destination_buffer"_a, "destination_offset"_a,
+            "destination_bytes_per_row"_a, "destination_bytes_per_image"_a,
+            "Copy texture data to a buffer")
+
+        .def("copy_from_buffer_to_texture",
+            [](MTL::BlitCommandEncoder* self, MTL::Buffer* src, uint64_t src_offset,
+               uint32_t src_bytes_per_row, uint32_t src_bytes_per_image,
+               MTL::Size src_size, MTL::Texture* dst, uint32_t dst_slice,
+               uint32_t dst_level, MTL::Origin dst_origin) {
+                self->copyFromBuffer(src, src_offset, src_bytes_per_row, src_bytes_per_image,
+                                    src_size, dst, dst_slice, dst_level, dst_origin);
+            },
+            "source_buffer"_a, "source_offset"_a, "source_bytes_per_row"_a,
+            "source_bytes_per_image"_a, "source_size"_a, "destination_texture"_a,
+            "destination_slice"_a, "destination_level"_a, "destination_origin"_a,
+            "Copy buffer data to a texture")
+
+        .def("generate_mipmaps",
+            [](MTL::BlitCommandEncoder* self, MTL::Texture* texture) {
+                self->generateMipmaps(texture);
+            },
+            "texture"_a,
+            "Generate mipmaps for a texture")
+
+        .def("fill_buffer",
+            [](MTL::BlitCommandEncoder* self, MTL::Buffer* buffer, NS::Range range, uint8_t value) {
+                self->fillBuffer(buffer, range, value);
+            },
+            "buffer"_a, "range"_a, "value"_a,
+            "Fill a buffer range with a constant value")
+
+        .def("synchronize_resource",
+            [](MTL::BlitCommandEncoder* self, MTL::Buffer* buffer) {
+                self->synchronizeResource(buffer);
+            },
+            "buffer"_a,
+            "Synchronize a managed resource")
+
+        .def("synchronize_texture",
+            [](MTL::BlitCommandEncoder* self, MTL::Texture* texture, uint32_t slice, uint32_t level) {
+                self->synchronizeTexture(texture, slice, level);
+            },
+            "texture"_a, "slice"_a, "level"_a,
+            "Synchronize a specific texture slice and mip level")
+
+        .def("end_encoding",
+            [](MTL::BlitCommandEncoder* self) {
+                self->endEncoding();
+            },
+            "Finish encoding blit commands");
+}
+
+// ============================================================================
+// Phase 2 Advanced: Depth/Stencil Testing
+// ============================================================================
+
+void wrap_depth_stencil(nb::module_& m) {
+    // StencilDescriptor
+    nb::class_<MTL::StencilDescriptor>(m, "StencilDescriptor",
+        "Describes stencil test operations")
+        .def_static("stencil_descriptor",
+            []() { return MTL::StencilDescriptor::alloc()->init(); },
+            nb::rv_policy::reference,
+            "Create a new stencil descriptor")
+
+        .def_prop_rw("stencil_compare_function",
+            [](MTL::StencilDescriptor* self) { return self->stencilCompareFunction(); },
+            [](MTL::StencilDescriptor* self, MTL::CompareFunction func) {
+                self->setStencilCompareFunction(func);
+            },
+            "The stencil comparison function")
+
+        .def_prop_rw("stencil_failure_operation",
+            [](MTL::StencilDescriptor* self) { return self->stencilFailureOperation(); },
+            [](MTL::StencilDescriptor* self, MTL::StencilOperation op) {
+                self->setStencilFailureOperation(op);
+            },
+            "Operation when stencil test fails")
+
+        .def_prop_rw("depth_failure_operation",
+            [](MTL::StencilDescriptor* self) { return self->depthFailureOperation(); },
+            [](MTL::StencilDescriptor* self, MTL::StencilOperation op) {
+                self->setDepthFailureOperation(op);
+            },
+            "Operation when depth test fails")
+
+        .def_prop_rw("depth_stencil_pass_operation",
+            [](MTL::StencilDescriptor* self) { return self->depthStencilPassOperation(); },
+            [](MTL::StencilDescriptor* self, MTL::StencilOperation op) {
+                self->setDepthStencilPassOperation(op);
+            },
+            "Operation when both tests pass")
+
+        .def_prop_rw("read_mask",
+            [](MTL::StencilDescriptor* self) { return self->readMask(); },
+            [](MTL::StencilDescriptor* self, uint32_t mask) {
+                self->setReadMask(mask);
+            },
+            "Mask for reading stencil values")
+
+        .def_prop_rw("write_mask",
+            [](MTL::StencilDescriptor* self) { return self->writeMask(); },
+            [](MTL::StencilDescriptor* self, uint32_t mask) {
+                self->setWriteMask(mask);
+            },
+            "Mask for writing stencil values");
+
+    // DepthStencilDescriptor
+    nb::class_<MTL::DepthStencilDescriptor>(m, "DepthStencilDescriptor",
+        "Describes depth and stencil test configuration")
+        .def_static("depth_stencil_descriptor",
+            []() { return MTL::DepthStencilDescriptor::alloc()->init(); },
+            nb::rv_policy::reference,
+            "Create a new depth/stencil descriptor")
+
+        .def_prop_rw("depth_compare_function",
+            [](MTL::DepthStencilDescriptor* self) { return self->depthCompareFunction(); },
+            [](MTL::DepthStencilDescriptor* self, MTL::CompareFunction func) {
+                self->setDepthCompareFunction(func);
+            },
+            "The depth comparison function")
+
+        .def_prop_rw("depth_write_enabled",
+            [](MTL::DepthStencilDescriptor* self) { return self->depthWriteEnabled(); },
+            [](MTL::DepthStencilDescriptor* self, bool enabled) {
+                self->setDepthWriteEnabled(enabled);
+            },
+            "Whether depth writes are enabled")
+
+        .def_prop_rw("front_face_stencil",
+            [](MTL::DepthStencilDescriptor* self) { return self->frontFaceStencil(); },
+            [](MTL::DepthStencilDescriptor* self, MTL::StencilDescriptor* desc) {
+                self->setFrontFaceStencil(desc);
+            },
+            nb::rv_policy::reference,
+            "Stencil operations for front-facing primitives")
+
+        .def_prop_rw("back_face_stencil",
+            [](MTL::DepthStencilDescriptor* self) { return self->backFaceStencil(); },
+            [](MTL::DepthStencilDescriptor* self, MTL::StencilDescriptor* desc) {
+                self->setBackFaceStencil(desc);
+            },
+            nb::rv_policy::reference,
+            "Stencil operations for back-facing primitives")
+
+        .def_prop_rw("label",
+            [](MTL::DepthStencilDescriptor* self) {
+                auto label = self->label();
+                return label ? std::string(label->utf8String()) : std::string("");
+            },
+            [](MTL::DepthStencilDescriptor* self, const std::string& label) {
+                self->setLabel(NS::String::string(label.c_str(), NS::UTF8StringEncoding));
+            },
+            "A string to help identify this object");
+
+    // DepthStencilState
+    nb::class_<MTL::DepthStencilState>(m, "DepthStencilState",
+        "Immutable depth and stencil test state")
+        .def_prop_ro("label",
+            [](MTL::DepthStencilState* self) {
+                auto label = self->label();
+                return label ? std::string(label->utf8String()) : std::string("");
+            },
+            "The state's label");
+}
+
+// ============================================================================
+// Phase 2 Advanced: Heap Memory Management
+// ============================================================================
+
+void wrap_heap(nb::module_& m) {
+    // HeapDescriptor
+    nb::class_<MTL::HeapDescriptor>(m, "HeapDescriptor",
+        "Describes a heap for resource suballocation")
+        .def_static("heap_descriptor",
+            []() { return MTL::HeapDescriptor::alloc()->init(); },
+            nb::rv_policy::reference,
+            "Create a new heap descriptor")
+
+        .def_prop_rw("size",
+            [](MTL::HeapDescriptor* self) { return self->size(); },
+            [](MTL::HeapDescriptor* self, uint64_t size) {
+                self->setSize(size);
+            },
+            "The size of the heap in bytes")
+
+        .def_prop_rw("storage_mode",
+            [](MTL::HeapDescriptor* self) { return self->storageMode(); },
+            [](MTL::HeapDescriptor* self, MTL::StorageMode mode) {
+                self->setStorageMode(mode);
+            },
+            "The storage mode for resources in the heap")
+
+        .def_prop_rw("cpu_cache_mode",
+            [](MTL::HeapDescriptor* self) { return self->cpuCacheMode(); },
+            [](MTL::HeapDescriptor* self, MTL::CPUCacheMode mode) {
+                self->setCpuCacheMode(mode);
+            },
+            "The CPU cache mode for the heap");
+
+    // Heap
+    nb::class_<MTL::Heap>(m, "Heap",
+        "A heap for efficient suballocation of GPU resources")
+        .def_prop_ro("device",
+            [](MTL::Heap* self) { return self->device(); },
+            nb::rv_policy::reference,
+            "The device that created this heap")
+
+        .def_prop_ro("label",
+            [](MTL::Heap* self) {
+                auto label = self->label();
+                return label ? std::string(label->utf8String()) : std::string("");
+            },
+            "The heap's label")
+
+        .def_prop_ro("size",
+            [](MTL::Heap* self) { return self->size(); },
+            "The heap's size in bytes")
+
+        .def_prop_ro("used_size",
+            [](MTL::Heap* self) { return self->usedSize(); },
+            "The amount of heap space currently used")
+
+        .def_prop_ro("current_allocated_size",
+            [](MTL::Heap* self) { return self->currentAllocatedSize(); },
+            "The current allocated size")
+
+        .def("max_available_size",
+            [](MTL::Heap* self, uint64_t alignment) { return self->maxAvailableSize(alignment); },
+            "alignment"_a,
+            "Get maximum available size with alignment")
+
+        .def("new_buffer",
+            [](MTL::Heap* self, uint64_t length, uint64_t options) {
+                return self->newBuffer(length, (MTL::ResourceOptions)options);
+            },
+            "length"_a, "options"_a,
+            nb::rv_policy::reference,
+            "Allocate a buffer from the heap")
+
+        .def("new_texture",
+            [](MTL::Heap* self, MTL::TextureDescriptor* desc) {
+                return self->newTexture(desc);
+            },
+            "descriptor"_a,
+            nb::rv_policy::reference,
+            "Allocate a texture from the heap");
+}
+
+// ============================================================================
+// Phase 2 Advanced: Fence Synchronization
+// ============================================================================
+
+void wrap_fence(nb::module_& m) {
+    nb::class_<MTL::Fence>(m, "Fence",
+        "Synchronization primitive for coordinating work between encoders")
+        .def_prop_ro("device",
+            [](MTL::Fence* self) { return self->device(); },
+            nb::rv_policy::reference,
+            "The device that created this fence")
+
+        .def_prop_ro("label",
+            [](MTL::Fence* self) {
+                auto label = self->label();
+                return label ? std::string(label->utf8String()) : std::string("");
+            },
+            "The fence's label");
+}
+
+// ============================================================================
+// Phase 3: Event System (Fine-grained Synchronization)
+// ============================================================================
+
+void wrap_event(nb::module_& m) {
+    // Event
+    nb::class_<MTL::Event>(m, "Event",
+        "Fine-grained GPU synchronization primitive")
+        .def_prop_ro("device",
+            [](MTL::Event* self) { return self->device(); },
+            nb::rv_policy::reference,
+            "The device that created this event");
+
+    // SharedEvent
+    nb::class_<MTL::SharedEvent>(m, "SharedEvent",
+        "Cross-process GPU synchronization event")
+        .def_prop_ro("device",
+            [](MTL::SharedEvent* self) { return self->device(); },
+            nb::rv_policy::reference,
+            "The device that created this event")
+
+        .def_prop_rw("signaled_value",
+            [](MTL::SharedEvent* self) { return self->signaledValue(); },
+            [](MTL::SharedEvent* self, uint64_t value) {
+                self->setSignaledValue(value);
+            },
+            "The current signaled value");
+}
+
+// ============================================================================
+// Phase 3: Argument Buffers (Indirect Resource Binding)
+// ============================================================================
+
+void wrap_argument_encoder(nb::module_& m) {
+    // ArgumentDescriptor
+    nb::class_<MTL::ArgumentDescriptor>(m, "ArgumentDescriptor",
+        "Describes an argument in an argument buffer")
+        .def_static("argument_descriptor",
+            []() { return MTL::ArgumentDescriptor::argumentDescriptor(); },
+            nb::rv_policy::reference,
+            "Create a new argument descriptor")
+
+        .def_prop_rw("data_type",
+            [](MTL::ArgumentDescriptor* self) { return self->dataType(); },
+            [](MTL::ArgumentDescriptor* self, MTL::DataType type) {
+                self->setDataType(type);
+            },
+            "The data type of the argument")
+
+        .def_prop_rw("index",
+            [](MTL::ArgumentDescriptor* self) { return self->index(); },
+            [](MTL::ArgumentDescriptor* self, uint32_t index) {
+                self->setIndex(index);
+            },
+            "The binding index")
+
+        .def_prop_rw("array_length",
+            [](MTL::ArgumentDescriptor* self) { return self->arrayLength(); },
+            [](MTL::ArgumentDescriptor* self, uint32_t length) {
+                self->setArrayLength(length);
+            },
+            "Array length for array arguments")
+
+        .def_prop_rw("access",
+            [](MTL::ArgumentDescriptor* self) { return self->access(); },
+            [](MTL::ArgumentDescriptor* self, MTL::BindingAccess access) {
+                self->setAccess(access);
+            },
+            "Read/write access mode");
+
+    // ArgumentEncoder
+    nb::class_<MTL::ArgumentEncoder>(m, "ArgumentEncoder",
+        "Encodes resource bindings into an argument buffer")
+        .def_prop_ro("device",
+            [](MTL::ArgumentEncoder* self) { return self->device(); },
+            nb::rv_policy::reference,
+            "The device that created this encoder")
+
+        .def_prop_ro("encoded_length",
+            [](MTL::ArgumentEncoder* self) { return self->encodedLength(); },
+            "The size in bytes of the encoded argument buffer")
+
+        .def("set_argument_buffer",
+            [](MTL::ArgumentEncoder* self, MTL::Buffer* buffer, uint64_t offset) {
+                self->setArgumentBuffer(buffer, offset);
+            },
+            "buffer"_a, "offset"_a,
+            "Set the destination buffer for encoding")
+
+        .def("set_buffer",
+            [](MTL::ArgumentEncoder* self, MTL::Buffer* buffer, uint64_t offset, uint32_t index) {
+                self->setBuffer(buffer, offset, index);
+            },
+            "buffer"_a, "offset"_a, "index"_a,
+            "Encode a buffer argument")
+
+        .def("set_texture",
+            [](MTL::ArgumentEncoder* self, MTL::Texture* texture, uint32_t index) {
+                self->setTexture(texture, index);
+            },
+            "texture"_a, "index"_a,
+            "Encode a texture argument")
+
+        .def("set_sampler_state",
+            [](MTL::ArgumentEncoder* self, MTL::SamplerState* sampler, uint32_t index) {
+                self->setSamplerState(sampler, index);
+            },
+            "sampler"_a, "index"_a,
+            "Encode a sampler argument");
+}
+
+// ============================================================================
+// Phase 3: Indirect Command Buffers (GPU-Driven Rendering)
+// ============================================================================
+
+void wrap_indirect_command_buffer(nb::module_& m) {
+    // IndirectCommandBufferDescriptor
+    nb::class_<MTL::IndirectCommandBufferDescriptor>(m, "IndirectCommandBufferDescriptor",
+        "Descriptor for creating indirect command buffers")
+        .def_static("indirect_command_buffer_descriptor",
+            []() { return MTL::IndirectCommandBufferDescriptor::alloc()->init(); },
+            nb::rv_policy::reference,
+            "Create a new indirect command buffer descriptor")
+
+        .def_prop_rw("command_types",
+            [](MTL::IndirectCommandBufferDescriptor* self) { return self->commandTypes(); },
+            [](MTL::IndirectCommandBufferDescriptor* self, MTL::IndirectCommandType types) {
+                self->setCommandTypes(types);
+            },
+            "Types of commands this buffer can encode")
+
+        .def_prop_rw("inherit_buffers",
+            [](MTL::IndirectCommandBufferDescriptor* self) { return self->inheritBuffers(); },
+            [](MTL::IndirectCommandBufferDescriptor* self, bool inherit) {
+                self->setInheritBuffers(inherit);
+            },
+            "Whether to inherit buffer bindings")
+
+        .def_prop_rw("inherit_pipeline_state",
+            [](MTL::IndirectCommandBufferDescriptor* self) { return self->inheritPipelineState(); },
+            [](MTL::IndirectCommandBufferDescriptor* self, bool inherit) {
+                self->setInheritPipelineState(inherit);
+            },
+            "Whether to inherit pipeline state")
+
+        .def_prop_rw("max_vertex_buffer_bind_count",
+            [](MTL::IndirectCommandBufferDescriptor* self) { return self->maxVertexBufferBindCount(); },
+            [](MTL::IndirectCommandBufferDescriptor* self, uint32_t count) {
+                self->setMaxVertexBufferBindCount(count);
+            },
+            "Maximum number of vertex buffers");
+
+    // IndirectCommandBuffer
+    nb::class_<MTL::IndirectCommandBuffer>(m, "IndirectCommandBuffer",
+        "Buffer containing GPU-generated draw commands")
+        .def_prop_ro("size",
+            [](MTL::IndirectCommandBuffer* self) { return self->size(); },
+            "Number of commands in the buffer");
+}
+
+// ============================================================================
+// Phase 3: Binary Archive (Pipeline Caching)
+// ============================================================================
+
+void wrap_binary_archive(nb::module_& m) {
+    // BinaryArchiveDescriptor
+    nb::class_<MTL::BinaryArchiveDescriptor>(m, "BinaryArchiveDescriptor",
+        "Descriptor for creating binary archives")
+        .def_static("binary_archive_descriptor",
+            []() { return MTL::BinaryArchiveDescriptor::alloc()->init(); },
+            nb::rv_policy::reference,
+            "Create a new binary archive descriptor")
+
+        .def("set_url",
+            [](MTL::BinaryArchiveDescriptor* self, const std::string& path) {
+                NS::String* ns_path = NS::String::string(path.c_str(), NS::UTF8StringEncoding);
+                NS::URL* url = NS::URL::alloc()->initFileURLWithPath(ns_path);
+                self->setUrl(url);
+            },
+            "path"_a,
+            "Set the file path for the binary archive");
+
+    // BinaryArchive
+    nb::class_<MTL::BinaryArchive>(m, "BinaryArchive",
+        "Archive of compiled pipeline state objects")
+        .def_prop_ro("device",
+            [](MTL::BinaryArchive* self) { return self->device(); },
+            nb::rv_policy::reference,
+            "The device that created this archive")
+
+        .def_prop_ro("label",
+            [](MTL::BinaryArchive* self) {
+                auto label = self->label();
+                return label ? std::string(label->utf8String()) : std::string("");
+            },
+            "The archive's label");
+}
+
+// ============================================================================
+// Phase 3: Capture Scope (GPU Debugging)
+// ============================================================================
+
+void wrap_capture_scope(nb::module_& m) {
+    // CaptureScope
+    nb::class_<MTL::CaptureScope>(m, "CaptureScope",
+        "Boundary for GPU frame capture")
+        .def("begin_scope",
+            [](MTL::CaptureScope* self) {
+                self->beginScope();
+            },
+            "Begin a capture scope")
+
+        .def("end_scope",
+            [](MTL::CaptureScope* self) {
+                self->endScope();
+            },
+            "End a capture scope")
+
+        .def_prop_ro("device",
+            [](MTL::CaptureScope* self) { return self->device(); },
+            nb::rv_policy::reference,
+            "The device for this scope")
+
+        .def_prop_rw("label",
+            [](MTL::CaptureScope* self) {
+                auto label = self->label();
+                return label ? std::string(label->utf8String()) : std::string("");
+            },
+            [](MTL::CaptureScope* self, const std::string& label) {
+                self->setLabel(NS::String::string(label.c_str(), NS::UTF8StringEncoding));
+            },
+            "The scope's label");
+
+    // CaptureManager - singleton for controlling GPU captures
+    nb::class_<MTL::CaptureManager>(m, "CaptureManager",
+        "Manager for GPU frame capture")
+        .def("new_capture_scope_with_device",
+            [](MTL::CaptureManager* self, MTL::Device* device) {
+                return self->newCaptureScope(device);
+            },
+            "device"_a,
+            nb::rv_policy::reference,
+            "Create a new capture scope for a device")
+
+        .def("new_capture_scope_with_command_queue",
+            [](MTL::CaptureManager* self, MTL::CommandQueue* queue) {
+                return self->newCaptureScope(queue);
+            },
+            "queue"_a,
+            nb::rv_policy::reference,
+            "Create a new capture scope for a command queue")
+
+        .def("start_capture_with_scope",
+            [](MTL::CaptureManager* self, MTL::CaptureScope* scope) {
+                self->startCapture(scope);
+            },
+            "scope"_a,
+            "Start capturing with a specific scope")
+
+        .def("stop_capture",
+            [](MTL::CaptureManager* self) {
+                self->stopCapture();
+            },
+            "Stop the current capture")
+
+        .def_prop_ro("is_capturing",
+            [](MTL::CaptureManager* self) { return self->isCapturing(); },
+            "Whether a capture is in progress")
+
+        .def_prop_rw("default_capture_scope",
+            [](MTL::CaptureManager* self) { return self->defaultCaptureScope(); },
+            [](MTL::CaptureManager* self, MTL::CaptureScope* scope) {
+                self->setDefaultCaptureScope(scope);
+            },
+            nb::rv_policy::reference,
+            "The default capture scope");
+
+    // Global function to get shared capture manager
+    m.def("shared_capture_manager",
+        []() { return MTL::CaptureManager::sharedCaptureManager(); },
+        nb::rv_policy::reference,
+        "Get the shared capture manager instance");
 }
 
 // ============================================================================
@@ -1203,4 +1955,17 @@ NB_MODULE(_pymetal, m) {
     // Wrap optional features
     wrap_vertex_descriptor(m);
     wrap_metal_layer(m);
+
+    // Wrap Phase 2 Advanced features
+    wrap_blit_encoder(m);
+    wrap_depth_stencil(m);
+    wrap_heap(m);
+    wrap_fence(m);
+
+    // Wrap Phase 3 features
+    wrap_event(m);
+    wrap_argument_encoder(m);
+    wrap_indirect_command_buffer(m);
+    wrap_binary_archive(m);
+    wrap_capture_scope(m);
 }
