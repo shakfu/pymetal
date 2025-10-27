@@ -33,8 +33,8 @@ def gaussian_blur_gpu(image, sigma=2.0):
     #include <metal_stdlib>
     using namespace metal;
 
-    // 5x5 Gaussian kernel
-    constant float kernel[25] = {
+    // 5x5 Gaussian kernel weights
+    constant float gaussian_kernel[25] = {
         1.0/256.0,  4.0/256.0,  6.0/256.0,  4.0/256.0, 1.0/256.0,
         4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0,
         6.0/256.0, 24.0/256.0, 36.0/256.0, 24.0/256.0, 6.0/256.0,
@@ -68,7 +68,7 @@ def gaussian_blur_gpu(image, sigma=2.0):
                 uint idx = y * width + x;
                 uint kidx = (ky + 2) * 5 + (kx + 2);
 
-                sum += input[idx] * kernel[kidx];
+                sum += input[idx] * gaussian_kernel[kidx];
             }
         }
 
