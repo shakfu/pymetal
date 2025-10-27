@@ -17,6 +17,8 @@ from ._pymetal import (
 
     # Memory resources
     Buffer,
+    Texture,
+    TextureDescriptor,
 
     # Shader compilation
     Library,
@@ -27,11 +29,44 @@ from ._pymetal import (
     ComputePipelineState,
     ComputeCommandEncoder,
 
-    # Enumerations
+    # Graphics pipeline
+    RenderPipelineState,
+    RenderPipelineDescriptor,
+    RenderPipelineColorAttachmentDescriptor,
+    RenderCommandEncoder,
+
+    # Render pass
+    RenderPassDescriptor,
+    RenderPassAttachmentDescriptor,
+    RenderPassColorAttachmentDescriptor,
+    RenderPassDepthAttachmentDescriptor,
+    ClearColor,
+
+    # Sampling
+    SamplerState,
+    SamplerDescriptor,
+
+    # Phase 1 Enumerations
     StorageMode,
     CPUCacheMode,
     LoadAction,
     StoreAction,
+
+    # Phase 2 Enumerations
+    PixelFormat,
+    PrimitiveType,
+    IndexType,
+    VertexFormat,
+    VertexStepFunction,
+    CullMode,
+    Winding,
+    TextureType,
+    SamplerMinMagFilter,
+    SamplerMipFilter,
+    SamplerAddressMode,
+    CompareFunction,
+    BlendFactor,
+    BlendOperation,
 
     # ResourceOptions constants (bitmask values)
     ResourceCPUCacheModeDefaultCache,
@@ -41,6 +76,14 @@ from ._pymetal import (
     ResourceStorageModePrivate,
     ResourceStorageModeMemoryless,
     ResourceHazardTrackingModeUntracked,
+
+    # ColorWriteMask constants (bitmask values)
+    ColorWriteMaskNone,
+    ColorWriteMaskRed,
+    ColorWriteMaskGreen,
+    ColorWriteMaskBlue,
+    ColorWriteMaskAlpha,
+    ColorWriteMaskAll,
 )
 
 __version__ = "0.1.0"
@@ -57,6 +100,8 @@ __all__ = [
 
     # Memory resources
     "Buffer",
+    "Texture",
+    "TextureDescriptor",
 
     # Shader compilation
     "Library",
@@ -67,11 +112,44 @@ __all__ = [
     "ComputePipelineState",
     "ComputeCommandEncoder",
 
-    # Enumerations
+    # Graphics pipeline
+    "RenderPipelineState",
+    "RenderPipelineDescriptor",
+    "RenderPipelineColorAttachmentDescriptor",
+    "RenderCommandEncoder",
+
+    # Render pass
+    "RenderPassDescriptor",
+    "RenderPassAttachmentDescriptor",
+    "RenderPassColorAttachmentDescriptor",
+    "RenderPassDepthAttachmentDescriptor",
+    "ClearColor",
+
+    # Sampling
+    "SamplerState",
+    "SamplerDescriptor",
+
+    # Phase 1 Enumerations
     "StorageMode",
     "CPUCacheMode",
     "LoadAction",
     "StoreAction",
+
+    # Phase 2 Enumerations
+    "PixelFormat",
+    "PrimitiveType",
+    "IndexType",
+    "VertexFormat",
+    "VertexStepFunction",
+    "CullMode",
+    "Winding",
+    "TextureType",
+    "SamplerMinMagFilter",
+    "SamplerMipFilter",
+    "SamplerAddressMode",
+    "CompareFunction",
+    "BlendFactor",
+    "BlendOperation",
 
     # ResourceOptions constants
     "ResourceCPUCacheModeDefaultCache",
@@ -81,4 +159,12 @@ __all__ = [
     "ResourceStorageModePrivate",
     "ResourceStorageModeMemoryless",
     "ResourceHazardTrackingModeUntracked",
+
+    # ColorWriteMask constants
+    "ColorWriteMaskNone",
+    "ColorWriteMaskRed",
+    "ColorWriteMaskGreen",
+    "ColorWriteMaskBlue",
+    "ColorWriteMaskAlpha",
+    "ColorWriteMaskAll",
 ]
