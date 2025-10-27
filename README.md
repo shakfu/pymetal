@@ -27,7 +27,7 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
 
 ### Core Capabilities
 
-#### Phase 1: Compute Pipeline ✓
+#### Phase 1: Compute Pipeline [x]
 - Device management and command queues
 - Buffer allocation and management
 - Shader compilation from Metal Shading Language source
@@ -35,7 +35,7 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
 - Thread group configuration and dispatch
 - Zero-copy NumPy buffer integration
 
-#### Phase 2: Graphics Pipeline ✓
+#### Phase 2: Graphics Pipeline [x]
 - **Core Graphics**:
   - Texture creation and management
   - Render pipeline state with vertex/fragment shaders
@@ -51,7 +51,7 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
   - Fence synchronization
   - Metal layer integration for display
 
-#### Phase 3: Advanced Features ✓
+#### Phase 3: Advanced Features [x]
 - **Event system** for fine-grained synchronization
 - **Shared events** for cross-process coordination
 - **Argument buffers** for efficient resource binding
@@ -412,18 +412,18 @@ python examples/01_image_blur.py
 ## When to Use PyMetal vs Alternatives
 
 ### Use PyMetal When:
-- ✅ You need **custom GPU algorithms** not available in libraries
-- ✅ You want **full control** over GPU resources
-- ✅ You're doing **image processing, simulations, or custom compute**
-- ✅ You need to **fuse operations** for efficiency
-- ✅ You want to **learn GPU programming** on Apple Silicon
-- ✅ You need **rasterization or compute pipelines** (ray tracing coming in Phase 4)
+- [x] You need **custom GPU algorithms** not available in libraries
+- [x] You want **full control** over GPU resources
+- [x] You're doing **image processing, simulations, or custom compute**
+- [x] You need to **fuse operations** for efficiency
+- [x] You want to **learn GPU programming** on Apple Silicon
+- [x] You need **rasterization or compute pipelines** (ray tracing coming in Phase 4)
 
 ### Use NumPy/SciPy When:
-- ✅ Standard operations (matrix multiply, FFT, convolution)
-- ✅ Prototyping and development speed matters
-- ✅ Small datasets where GPU overhead dominates
-- ✅ Apple's Accelerate framework provides optimizations
+- [x] Standard operations (matrix multiply, FFT, convolution)
+- [x] Prototyping and development speed matters
+- [x] Small datasets where GPU overhead dominates
+- [x] Apple's Accelerate framework provides optimizations
 
 ### Hybrid Approach:
 Most applications use **both**:
