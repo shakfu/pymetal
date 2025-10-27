@@ -8,6 +8,11 @@ This demo shows how to:
 4. Read results back to CPU
 
 Performance comparison: CPU vs GPU for image processing
+
+Note: GPU shows overhead for small images due to:
+- Shader compilation and pipeline setup
+- Memory transfer and kernel launch latency
+For 256×256, overhead dominates. GPU wins at 512×512+
 """
 
 import numpy as np

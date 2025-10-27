@@ -43,31 +43,70 @@ Small (256x256):
 
 ---
 
-### 02_matrix_multiply.py - GPU Matrix Multiplication
+### 02_matrix_multiply_naive.py - GPU Matrix Multiplication (Naive)
 
-GPU-accelerated matrix multiplication with GFLOPS measurement and NumPy comparison.
+**Educational implementation** showing PyMetal API usage with a simple, unoptimized algorithm.
+
+**Important:** NumPy will be **faster** because it uses Apple's Accelerate framework with the AMX matrix coprocessor. This demo prioritizes code clarity over performance to demonstrate API patterns.
 
 **Key Features:**
-- Matrix multiplication compute kernel
+- Simple O(N³) matrix multiplication
 - Multi-buffer management
 - 2D thread group dispatch
 - GFLOPS calculation
-- Result verification
-- Scaling from 128x128 to 1024x1024 matrices
+- Performance comparison showing CPU advantages
 
 **Run:**
 ```bash
-python examples/02_matrix_multiply.py
+python examples/02_matrix_multiply_naive.py
 ```
 
 **Expected Output:**
 ```
 Large (512x512) @ Large (512x512):
-  NumPy: 45.67 ms
-  Metal: 8.23 ms
-  Speedup: 5.55x
-  Metal: 32.56 GFLOPS
+  NumPy: 0.35 ms (766 GFLOPS)
+  Metal: 6.85 ms (39 GFLOPS)
+  NumPy wins - optimized Accelerate framework
 ```
+
+**Why NumPy is Faster:**
+- Uses Apple Accelerate BLAS (hand-tuned assembly)
+- Leverages AMX matrix coprocessor on Apple Silicon
+- Naive GPU implementation doesn't use shared memory or tiling
+
+---
+
+### 02_matrix_multiply_tiled.py - GPU Matrix Multiplication (Optimized)
+
+**Production-quality implementation** using advanced GPU optimization techniques.
+
+**Key Features:**
+- Tiled algorithm with threadgroup (shared) memory
+- Coalesced memory access patterns
+- Reduced global memory bandwidth
+- Proper synchronization barriers
+- Competitive performance with NumPy for large matrices
+
+**Run:**
+```bash
+python examples/02_matrix_multiply_tiled.py
+```
+
+**Expected Output:**
+```
+Large (1024x1024) @ Large (1024x1024):
+  NumPy (Accelerate): 2.98 ms (719 GFLOPS)
+  Metal (Tiled):      X.XX ms (XXX GFLOPS)
+  Improved over naive by ~X-Xx
+```
+
+**Optimization Techniques:**
+- 16×16 tile blocking
+- Shared memory caching
+- Reduced memory bandwidth by reusing data
+- Better cache utilization
+
+Compare with `02_matrix_multiply_naive.py` to see the impact of GPU optimization.
 
 ---
 

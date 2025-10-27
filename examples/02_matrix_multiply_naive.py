@@ -1,11 +1,32 @@
 """
-Matrix Multiplication Demo - GPU-Accelerated Matrix Operations
+Matrix Multiplication Demo (Naive) - Educational GPU Implementation
+
+IMPORTANT: This is a NAIVE implementation designed for clarity and API demonstration.
 
 This demo shows:
 1. Large-scale GPU compute operations
-2. Optimized thread group sizing
-3. Performance comparison with NumPy
-4. Memory transfer optimization
+2. Multi-buffer management
+3. 2D thread grid configuration
+4. Performance comparison with NumPy
+
+PERFORMANCE NOTE:
+----------------
+This implementation uses a simple O(N³) algorithm that is NOT optimized for GPU:
+- No shared/threadgroup memory usage
+- No tiling or blocking
+- Poor memory access patterns
+- Every thread reads directly from global memory
+
+NumPy will be FASTER because it uses:
+- Apple Accelerate framework (highly optimized BLAS)
+- AMX matrix coprocessor on Apple Silicon
+- Cache-optimized algorithms
+- Sustained ~700 GFLOPS performance
+
+For production matrix operations, use NumPy or scipy. This demo demonstrates
+PyMetal API usage patterns, not optimal GPU performance.
+
+See 02_matrix_multiply_tiled.py for an optimized GPU implementation.
 """
 
 import numpy as np
@@ -13,9 +34,13 @@ import pymetal as pm
 import time
 
 
-def matmul_gpu(A, B):
+def matmul_gpu_naive(A, B):
     """
-    GPU matrix multiplication using Metal compute shader.
+    NAIVE GPU matrix multiplication using Metal compute shader.
+
+    This is an educational implementation that prioritizes code clarity
+    over performance. Each thread computes one output element using a
+    simple loop over the K dimension.
 
     Args:
         A: Matrix of shape (M, K)
@@ -31,12 +56,15 @@ def matmul_gpu(A, B):
     K2, N = B.shape
     assert K == K2, "Matrix dimensions don't match"
 
-    # Metal shader for matrix multiplication
+    # Naive matrix multiplication shader
+    # WARNING: This is intentionally unoptimized for educational purposes
     shader_source = """
     #include <metal_stdlib>
     using namespace metal;
 
-    kernel void matmul(
+    // Naive O(N³) matrix multiplication kernel
+    // Each thread computes one output element C[row][col]
+    kernel void matmul_naive(
         device const float* A [[buffer(0)]],
         device const float* B [[buffer(1)]],
         device float* C [[buffer(2)]],
@@ -52,9 +80,12 @@ def matmul_gpu(A, B):
 
         if (row >= M || col >= N) return;
 
+        // Naive inner loop - reads from global memory every iteration
+        // No use of shared/threadgroup memory
+        // Causes poor cache utilization and memory bandwidth waste
         float sum = 0.0;
         for (uint k = 0; k < K; k++) {
-            sum += A[row * K + k] * B[k * N + col];
+            sum += A[row * K + k] * B[k * N + col];  // Uncoalesced reads
         }
 
         C[row * N + col] = sum;
@@ -63,7 +94,7 @@ def matmul_gpu(A, B):
 
     # Compile shader
     library = device.new_library_with_source(shader_source)
-    function = library.new_function("matmul")
+    function = library.new_function("matmul_naive")
     pipeline = device.new_compute_pipeline_state(function)
 
     # Prepare data
@@ -111,8 +142,13 @@ def matmul_gpu(A, B):
 
 def main():
     print("=" * 60)
-    print("PyMetal Matrix Multiplication Demo")
+    print("PyMetal Matrix Multiplication Demo (NAIVE)")
     print("=" * 60)
+    print()
+    print("NOTE: This is an educational implementation showing API usage.")
+    print("NumPy will be faster due to Apple Accelerate optimizations.")
+    print("See 02_matrix_multiply_tiled.py for an optimized GPU version.")
+    print()
 
     device = pm.create_system_default_device()
     print(f"\nGPU Device: {device.name}")
@@ -142,9 +178,9 @@ def main():
         numpy_time = time.time() - start
         print(f"  NumPy: {numpy_time*1000:.2f} ms")
 
-        # GPU timing
+        # GPU timing (naive implementation)
         start = time.time()
-        gpu_result = matmul_gpu(A, B)
+        gpu_result = matmul_gpu_naive(A, B)
         gpu_time = time.time() - start
         print(f"  Metal: {gpu_time*1000:.2f} ms")
 
