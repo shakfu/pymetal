@@ -522,15 +522,12 @@ Contributions welcome! Areas of interest:
 - Documentation enhancements
 - Bug fixes and testing
 
-## License
-
-[Add your license here]
-
 ## Acknowledgments
 
 - Built on Apple's [metal-cpp](https://developer.apple.com/metal/cpp/)
 - Uses [nanobind](https://github.com/wjakob/nanobind) for Python bindings
 - Inspired by the need for low-level GPU access from Python on macOS
+- Claude Code from [Anthropic](https://www.anthropic.com)
 
 ## Resources
 
