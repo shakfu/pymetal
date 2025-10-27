@@ -52,12 +52,20 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
   - Metal layer integration for display
 
 #### Phase 3: Advanced Features ✓
-- Event system for fine-grained synchronization
-- Shared events for cross-process coordination
-- Argument buffers for efficient resource binding
-- Indirect command buffers for GPU-driven rendering
-- Binary archives for pipeline caching
-- Capture scopes for Xcode GPU debugging integration
+- **Event system** for fine-grained synchronization
+- **Shared events** for cross-process coordination
+- **Argument buffers** for efficient resource binding
+- **Indirect command buffers** for GPU-driven rendering
+- **Binary archives** for pipeline caching
+- **Capture scopes** for Xcode GPU debugging integration
+
+#### Phase 4: Ray Tracing (Planned)
+- Ray tracing acceleration structures
+- Ray tracing pipelines
+- Intersection function tables
+- Primitive acceleration structures
+
+*Note: Ray tracing support can be added on-demand. Current implementation focuses on compute and rasterization.*
 
 ### Performance Characteristics
 
@@ -409,6 +417,7 @@ python examples/01_image_blur.py
 - ✅ You're doing **image processing, simulations, or custom compute**
 - ✅ You need to **fuse operations** for efficiency
 - ✅ You want to **learn GPU programming** on Apple Silicon
+- ✅ You need **rasterization or compute pipelines** (ray tracing coming in Phase 4)
 
 ### Use NumPy/SciPy When:
 - ✅ Standard operations (matrix multiply, FFT, convolution)
@@ -472,14 +481,46 @@ All 41 tests cover:
 - Advanced features (events, capture scopes, etc.)
 - Memory management and synchronization
 
+## Roadmap / Future Work
+
+### Potential Phase 4 Features (On-Demand)
+
+**Ray Tracing Support:**
+- [ ] Acceleration structure creation and management
+- [ ] Ray tracing pipeline descriptors
+- [ ] Intersection function tables
+- [ ] Ray/primitive intersection queries
+
+**Additional Features:**
+- [ ] Resource heaps with placement
+- [ ] Sparse textures
+- [ ] Indirect argument buffers
+- [ ] Metal Performance Shaders (MPS) integration
+- [ ] Async compute and graphics overlap
+- [ ] Multi-GPU support
+
+**Tooling:**
+- [ ] Shader debugging utilities
+- [ ] Performance profiling helpers
+- [ ] Memory leak detection
+- [ ] Automatic optimization suggestions
+
+**Language Bindings:**
+- [ ] Type stubs for better IDE support
+- [ ] Documentation generator from C++ comments
+- [ ] Additional high-level abstractions
+
+These features can be implemented as needed. Contributions welcome!
+
 ## Contributing
 
 Contributions welcome! Areas of interest:
+- **Ray tracing support** (most requested)
 - Additional examples and tutorials
 - Performance optimizations
 - API coverage improvements
 - Documentation enhancements
-- Bug fixes
+- Bug fixes and testing
 
 ## License
 
