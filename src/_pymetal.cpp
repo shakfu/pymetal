@@ -109,7 +109,11 @@ void wrap_device(nb::module_& m) {
                 NS::String* src = std_string_to_ns(source);
                 MTL::CompileOptions* options = nullptr;
 
-                MTL::Library* lib = self->newLibrary(src, options, &error);
+                MTL::Library* lib;
+                {
+                    nb::gil_scoped_release release;
+                    lib = self->newLibrary(src, options, &error);
+                }
 
                 if (error) {
                     std::string error_msg = ns_string_to_std(error->localizedDescription());
@@ -125,7 +129,11 @@ void wrap_device(nb::module_& m) {
         .def("new_compute_pipeline_state",
             [](MTL::Device* self, MTL::Function* function) {
                 NS::Error* error = nullptr;
-                MTL::ComputePipelineState* state = self->newComputePipelineState(function, &error);
+                MTL::ComputePipelineState* state;
+                {
+                    nb::gil_scoped_release release;
+                    state = self->newComputePipelineState(function, &error);
+                }
 
                 if (error) {
                     std::string error_msg = ns_string_to_std(error->localizedDescription());
@@ -170,7 +178,11 @@ void wrap_device(nb::module_& m) {
         .def("new_render_pipeline_state",
             [](MTL::Device* self, MTL::RenderPipelineDescriptor* descriptor) {
                 NS::Error* error = nullptr;
-                MTL::RenderPipelineState* state = self->newRenderPipelineState(descriptor, &error);
+                MTL::RenderPipelineState* state;
+                {
+                    nb::gil_scoped_release release;
+                    state = self->newRenderPipelineState(descriptor, &error);
+                }
 
                 if (error) {
                     std::string error_msg = ns_string_to_std(error->localizedDescription());
@@ -186,7 +198,12 @@ void wrap_device(nb::module_& m) {
         // Phase 2 Advanced: Depth/stencil, heap, and fence methods
         .def("new_depth_stencil_state",
             [](MTL::Device* self, MTL::DepthStencilDescriptor* descriptor) {
-                return self->newDepthStencilState(descriptor);
+                MTL::DepthStencilState* state;
+                {
+                    nb::gil_scoped_release release;
+                    state = self->newDepthStencilState(descriptor);
+                }
+                return state;
             },
             "descriptor"_a,
             nb::rv_policy::reference,
@@ -244,7 +261,11 @@ void wrap_device(nb::module_& m) {
         .def("new_binary_archive",
             [](MTL::Device* self, MTL::BinaryArchiveDescriptor* descriptor) {
                 NS::Error* error = nullptr;
-                MTL::BinaryArchive* archive = self->newBinaryArchive(descriptor, &error);
+                MTL::BinaryArchive* archive;
+                {
+                    nb::gil_scoped_release release;
+                    archive = self->newBinaryArchive(descriptor, &error);
+                }
                 if (error) {
                     std::string error_msg = ns_string_to_std(error->localizedDescription());
                     throw std::runtime_error("Failed to create binary archive: " + error_msg);

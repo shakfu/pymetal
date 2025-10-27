@@ -1,11 +1,15 @@
 PROJECT_NAME = pymetal
 VERSION = 0.1.0
 
-.PHONY: all build clean test snap
+.PHONY: all build wheel clean test snap
 
 all: build
 
+
 build:
+	@uv sync --reinstall-package pymetal
+
+wheel:
 	@uv build
 
 install:
