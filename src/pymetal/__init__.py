@@ -46,6 +46,15 @@ from ._pymetal import (
     SamplerState,
     SamplerDescriptor,
 
+    # Vertex descriptors
+    VertexDescriptor,
+    VertexAttributeDescriptor,
+    VertexBufferLayoutDescriptor,
+
+    # Display integration
+    MetalLayer,
+    MetalDrawable,
+
     # Phase 1 Enumerations
     StorageMode,
     CPUCacheMode,
@@ -128,6 +137,15 @@ __all__ = [
     # Sampling
     "SamplerState",
     "SamplerDescriptor",
+
+    # Vertex descriptors
+    "VertexDescriptor",
+    "VertexAttributeDescriptor",
+    "VertexBufferLayoutDescriptor",
+
+    # Display integration
+    "MetalLayer",
+    "MetalDrawable",
 
     # Phase 1 Enumerations
     "StorageMode",

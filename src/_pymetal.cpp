@@ -846,7 +846,15 @@ void wrap_render_pipeline(nb::module_& m) {
             [](MTL::RenderPipelineDescriptor* self) { return ns_string_to_std(self->label()); },
             [](MTL::RenderPipelineDescriptor* self, const std::string& label) {
                 self->setLabel(std_string_to_ns(label));
-            });
+            })
+
+        .def_prop_rw("vertex_descriptor",
+            [](MTL::RenderPipelineDescriptor* self) { return self->vertexDescriptor(); },
+            [](MTL::RenderPipelineDescriptor* self, MTL::VertexDescriptor* desc) {
+                self->setVertexDescriptor(desc);
+            },
+            nb::rv_policy::reference,
+            "The vertex descriptor");
 
     // RenderPipelineState
     nb::class_<MTL::RenderPipelineState>(m, "RenderPipelineState")
@@ -930,6 +938,164 @@ void wrap_render_pass(nb::module_& m) {
         .def_prop_ro("stencil_attachment",
             [](MTL::RenderPassDescriptor* self) { return self->stencilAttachment(); },
             nb::rv_policy::reference);
+}
+
+// ============================================================================
+// Phase 2: MTL::VertexDescriptor and related classes
+// ============================================================================
+
+void wrap_vertex_descriptor(nb::module_& m) {
+    // VertexAttributeDescriptor
+    nb::class_<MTL::VertexAttributeDescriptor>(m, "VertexAttributeDescriptor")
+        .def_prop_rw("format",
+            [](MTL::VertexAttributeDescriptor* self) { return self->format(); },
+            [](MTL::VertexAttributeDescriptor* self, MTL::VertexFormat format) {
+                self->setFormat(format);
+            })
+
+        .def_prop_rw("offset",
+            [](MTL::VertexAttributeDescriptor* self) { return self->offset(); },
+            [](MTL::VertexAttributeDescriptor* self, uint32_t offset) {
+                self->setOffset(offset);
+            })
+
+        .def_prop_rw("buffer_index",
+            [](MTL::VertexAttributeDescriptor* self) { return self->bufferIndex(); },
+            [](MTL::VertexAttributeDescriptor* self, uint32_t index) {
+                self->setBufferIndex(index);
+            });
+
+    // VertexBufferLayoutDescriptor
+    nb::class_<MTL::VertexBufferLayoutDescriptor>(m, "VertexBufferLayoutDescriptor")
+        .def_prop_rw("stride",
+            [](MTL::VertexBufferLayoutDescriptor* self) { return self->stride(); },
+            [](MTL::VertexBufferLayoutDescriptor* self, uint32_t stride) {
+                self->setStride(stride);
+            })
+
+        .def_prop_rw("step_function",
+            [](MTL::VertexBufferLayoutDescriptor* self) { return self->stepFunction(); },
+            [](MTL::VertexBufferLayoutDescriptor* self, MTL::VertexStepFunction func) {
+                self->setStepFunction(func);
+            })
+
+        .def_prop_rw("step_rate",
+            [](MTL::VertexBufferLayoutDescriptor* self) { return self->stepRate(); },
+            [](MTL::VertexBufferLayoutDescriptor* self, uint32_t rate) {
+                self->setStepRate(rate);
+            });
+
+    // VertexDescriptor
+    nb::class_<MTL::VertexDescriptor>(m, "VertexDescriptor")
+        .def_static("vertex_descriptor",
+            []() { return MTL::VertexDescriptor::vertexDescriptor(); },
+            nb::rv_policy::reference,
+            "Create a new vertex descriptor")
+
+        .def("attribute",
+            [](MTL::VertexDescriptor* self, uint32_t index) {
+                return self->attributes()->object(index);
+            },
+            "index"_a,
+            nb::rv_policy::reference,
+            "Get vertex attribute descriptor at index")
+
+        .def("layout",
+            [](MTL::VertexDescriptor* self, uint32_t index) {
+                return self->layouts()->object(index);
+            },
+            "index"_a,
+            nb::rv_policy::reference,
+            "Get vertex buffer layout descriptor at index")
+
+        .def("reset",
+            [](MTL::VertexDescriptor* self) {
+                self->reset();
+            },
+            "Reset the vertex descriptor to default state");
+}
+
+// ============================================================================
+// Phase 2: CA::MetalLayer and CA::MetalDrawable
+// ============================================================================
+
+void wrap_metal_layer(nb::module_& m) {
+    // MetalDrawable
+    nb::class_<CA::MetalDrawable>(m, "MetalDrawable")
+        .def_prop_ro("texture",
+            [](CA::MetalDrawable* self) { return self->texture(); },
+            nb::rv_policy::reference,
+            "The texture to render into")
+
+        .def_prop_ro("layer",
+            [](CA::MetalDrawable* self) { return self->layer(); },
+            nb::rv_policy::reference,
+            "The layer that owns this drawable")
+
+        .def("present",
+            [](CA::MetalDrawable* self) {
+                self->present();
+            },
+            "Present the drawable to the screen");
+
+    // MetalLayer
+    nb::class_<CA::MetalLayer>(m, "MetalLayer")
+        .def_static("layer",
+            []() { return CA::MetalLayer::layer(); },
+            nb::rv_policy::reference,
+            "Create a new Metal layer")
+
+        .def_prop_rw("device",
+            [](CA::MetalLayer* self) { return self->device(); },
+            [](CA::MetalLayer* self, MTL::Device* device) {
+                self->setDevice(device);
+            },
+            nb::rv_policy::reference,
+            "The Metal device to use")
+
+        .def_prop_rw("pixel_format",
+            [](CA::MetalLayer* self) { return self->pixelFormat(); },
+            [](CA::MetalLayer* self, MTL::PixelFormat format) {
+                self->setPixelFormat(format);
+            },
+            "The pixel format of the layer")
+
+        .def_prop_rw("framebuffer_only",
+            [](CA::MetalLayer* self) { return self->framebufferOnly(); },
+            [](CA::MetalLayer* self, bool framebuffer_only) {
+                self->setFramebufferOnly(framebuffer_only);
+            },
+            "Whether the drawable can only be used as a framebuffer")
+
+        .def_prop_rw("drawable_size",
+            [](CA::MetalLayer* self) {
+                auto size = self->drawableSize();
+                return std::make_pair(size.width, size.height);
+            },
+            [](CA::MetalLayer* self, std::pair<double, double> size) {
+                CGSize cg_size;
+                cg_size.width = size.first;
+                cg_size.height = size.second;
+                self->setDrawableSize(cg_size);
+            },
+            "The size of the drawable in pixels")
+
+        .def("next_drawable",
+            [](CA::MetalLayer* self) {
+                return self->nextDrawable();
+            },
+            nb::rv_policy::reference,
+            "Get the next drawable for rendering");
+}
+
+// ============================================================================
+// Phase 2: Update RenderPipelineDescriptor for vertex descriptor
+// ============================================================================
+
+void add_vertex_descriptor_to_pipeline(nb::module_& m) {
+    auto pipeline_class = nb::type<MTL::RenderPipelineDescriptor>();
+    // Note: We can't add methods to already-defined classes in nanobind,
+    // so we need to add this in the original wrap_render_pipeline function
 }
 
 // ============================================================================
@@ -1033,4 +1199,8 @@ NB_MODULE(_pymetal, m) {
     wrap_render_pipeline(m);
     wrap_render_pass(m);
     wrap_render_encoder(m);
+
+    // Wrap optional features
+    wrap_vertex_descriptor(m);
+    wrap_metal_layer(m);
 }
