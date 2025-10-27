@@ -16,6 +16,17 @@ pip install numpy scipy
 
 ## Examples Overview
 
+### Quick Reference
+
+| Example | Type | Difficulty | Key Focus |
+|---------|------|------------|-----------|
+| 01_image_blur.py | Compute | Beginner | Shader basics, performance comparison |
+| 02_matrix_multiply_naive.py | Compute | Beginner | API demonstration (intentionally slow) |
+| 02_matrix_multiply_tiled.py | Compute | Intermediate | Shared memory, tiling optimization |
+| 02_matrix_multiply_optimized.py | Compute | Advanced | Bank conflicts, loop unrolling |
+| 03_triangle_rendering.py | Graphics | Intermediate | Complete graphics pipeline |
+| 04_advanced_features.py | Advanced | Advanced | Events, capture scopes, debugging |
+
 ### 01_image_blur.py - Image Processing with Compute Shaders
 
 Demonstrates GPU-accelerated Gaussian blur with performance comparison against CPU implementation.
@@ -148,6 +159,23 @@ Massive (4096x4096):
 - Optimized: ~220 GFLOPS
 
 NumPy remains faster due to dedicated AMX matrix hardware, but optimized GPU shows the limits of software optimization.
+
+#### Matrix Multiplication Performance Comparison
+
+Comparing all three implementations on Apple M1 (4096×4096 matrices):
+
+| Implementation | GFLOPS | Time (ms) | vs Naive | Notes |
+|----------------|--------|-----------|----------|-------|
+| **Naive** | ~100 | ~1373 | 1.0× | Baseline - no optimization |
+| **Tiled** | ~205 | ~670 | 2.0× | 16×16 shared memory tiles |
+| **Optimized** | ~222 | ~618 | 2.2× | Bank conflict avoidance + unrolling |
+| **NumPy/AMX** | ~868 | ~158 | 8.7× | Dedicated matrix hardware wins |
+
+**Key Takeaways:**
+- GPU optimization techniques provide 2-2.2× improvement
+- Specialized hardware (AMX) is 4× faster than optimized GPU for matmul
+- GPU excels at custom operations where specialized hardware doesn't exist
+- ~220 GFLOPS is respectable for M1 GPU (~8% of 2.6 TFLOPS peak)
 
 ---
 
@@ -290,6 +318,28 @@ np.copyto(np.frombuffer(buffer.contents(), dtype=np.float32), data)
 # Read from GPU buffer to NumPy
 result = np.frombuffer(buffer.contents(), dtype=np.float32, count=4)
 ```
+
+## When to Use GPU vs CPU
+
+### Use GPU When:
+- ✓ **Custom operations** not available in optimized libraries
+- ✓ **Highly parallel workloads** (thousands/millions of independent operations)
+- ✓ **Large datasets** (overhead is amortized)
+- ✓ **Fused operations** (combining multiple steps reduces memory traffic)
+- ✓ **Memory-bound operations** where parallelism helps bandwidth
+
+### Use CPU/NumPy When:
+- ✓ **Standard operations** (matmul, FFT, etc.) - use Accelerate/MKL
+- ✓ **Small datasets** (GPU overhead dominates)
+- ✓ **Sequential algorithms** (limited parallelism)
+- ✓ **Prototyping** (faster development, easier debugging)
+- ✓ **Apple Silicon** has AMX coprocessor for matrix operations
+
+### Hybrid Approach:
+Many real applications use **both**:
+- NumPy/Accelerate for standard linear algebra
+- GPU for custom kernels, image processing, simulations
+- CPU for control flow, data preparation
 
 ## Performance Tips
 

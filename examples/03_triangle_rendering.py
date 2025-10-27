@@ -210,16 +210,16 @@ def main():
     print("=" * 60)
 
     print("\nFeatures Demonstrated:")
-    print("  ✓ Graphics pipeline setup")
-    print("  ✓ Vertex and fragment shaders")
-    print("  ✓ Render target creation (color + depth)")
-    print("  ✓ Depth testing configuration")
-    print("  ✓ Render pass with multiple attachments")
-    print("  ✓ Triangle rasterization")
-    print("  ✓ Color interpolation across triangle")
-    print("  ✓ Blit encoder for texture-to-buffer copy")
-    print("  ✓ Offscreen rendering")
-    print("  ✓ Reading GPU results back to CPU")
+    print("  -Graphics pipeline setup")
+    print("  -Vertex and fragment shaders")
+    print("  -Render target creation (color + depth)")
+    print("  -Depth testing configuration")
+    print("  -Render pass with multiple attachments")
+    print("  -Triangle rasterization")
+    print("  -Color interpolation across triangle")
+    print("  -Blit encoder for texture-to-buffer copy")
+    print("  -Offscreen rendering")
+    print("  -Reading GPU results back to CPU")
 
 
 if __name__ == "__main__":
